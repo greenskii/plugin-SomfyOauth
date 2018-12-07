@@ -48,16 +48,26 @@ class somfyoauth extends eqLogic {
 			log::add('somfyoauth', 'debug', 'Contacting ' . print_r($url, true) .'...');
 	
 			//Initiate cURL.
-			$ch = curl_init($url);
-
-		
-		    $data = curl_exec($ch);
-		    curl_close($ch);
-			$array = json_decode($data, TRUE);
+			$defaults = array( 
+			    CURLOPT_HEADER => 0, 
+			    CURLOPT_URL => $url, 
+			    CURLOPT_FRESH_CONNECT => 1, 
+			    CURLOPT_RETURNTRANSFER => 1, 
+			    CURLOPT_FORBID_REUSE => 1, 
+			    CURLOPT_TIMEOUT => 4
+			); 
+			
+			$ch = curl_init(); 
+			curl_setopt_array($ch, ($defaults)); 
+			if( ! $result = curl_exec($ch)) 
+			{ 
+				log::add('somfyoauth', 'debug', 'erreur résultat');
+			    trigger_error(curl_error($ch)); 
+			} 
 			
 			log::add('somfyoauth', 'debug', 'fin appel URL');
 
-			log::add('somfyoauth', 'debug', print_r($array, true));
+			log::add('somfyoauth', 'debug', print_r($result, true));
 	
 		} catch (Exception $e) {
 			var_dump($e->getMessage());
