@@ -36,13 +36,12 @@ class somfyoauth extends eqLogic {
 			// on récupère les codes et clés
 			$oAuthClientID = config::byKey('OAuthClientID', 'somfyoauth');
 			$oAuthClientSecret = config::byKey('OAuthClientSecret', 'somfyoauth');
-			$authorizationCode = config::byKey('OAuthClientID', 'somfyoauth');
-			$oAuthClientID = config::byKey('OAuthClientID', 'somfyoauth');
-	
+			$oAuthAuthorizationCode = config::byKey('OAuthAuthorizationCode', 'somfyoauth');
+
 			$url = "https://accounts.somfy.com/oauth/oauth/v2/token?"
 				. "client_id=" . $oAuthClientID
 			    . "&client_secret=" . $oAuthClientSecret
-			    . "&grant_type=authorization_code&code=" . $OAuthAuthorizationCode 
+			    . "&grant_type=authorization_code&code=" . $oAuthAuthorizationCode 
 			    . "&redirect_uri=" . urlencode (network::getNetworkAccess('external','proto:ip') . '/plugins/somfyoauth/desktop/modal/OauthReturn.php');
 	
 	
@@ -50,19 +49,15 @@ class somfyoauth extends eqLogic {
 	
 			//Initiate cURL.
 			$ch = curl_init($url);
-	
-		    curl_setopt($ch, CURLOPT_AUTOREFERER, TRUE);
-		    curl_setopt($ch, CURLOPT_HEADER, 0);
-		    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-		    curl_setopt($ch, CURLOPT_URL, $url);
-		    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);       
+
 		
 		    $data = curl_exec($ch);
 		    curl_close($ch);
-	
 			$array = json_decode($data, TRUE);
 			
-			log::add('somfyoauth', 'debug', print_r($json, true));
+			log::add('somfyoauth', 'debug', 'fin appel URL');
+
+			log::add('somfyoauth', 'debug', print_r($array, true));
 	
 		} catch (Exception $e) {
 			var_dump($e->getMessage());
