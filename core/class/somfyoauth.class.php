@@ -68,6 +68,11 @@ class somfyoauth extends eqLogic {
 			log::add('somfyoauth', 'debug', 'fin appel URL');
 
 			log::add('somfyoauth', 'debug', print_r($result, true));
+			$array = json_decode($result, TRUE);
+			$accessToken = $array['access_token'];
+			$refreshToken = $array['refresh_token'];
+			config::save("OAuthAccessToken", $accessToken, "somfyoauth");
+			config::save("OAuthRefreshToken", $refreshToken, "somfyoauth");
 	
 		} catch (Exception $e) {
 			var_dump($e->getMessage());
