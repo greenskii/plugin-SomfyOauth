@@ -1,0 +1,14 @@
+{
+	"id" : "somfyoauth",
+	"name" : "SomfyOauth",
+	"description" : "Somfy Oauth Gateway. Il agit principalement comme un serveur oAuth2.",
+	"licence" : "AGPL",
+	"author" : "greenski",
+	"require" : "3.1",
+	"category" : "communication",
+	"hasDependency" : false,
+	"hasOwnDeamon" : false,
+	"maxDependancyInstallTime" : 0,
+	"changelog" : "",
+	"documentation" : ""
+}
