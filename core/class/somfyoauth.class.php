@@ -36,14 +36,14 @@ class somfyoauth extends eqLogic {
 			// on récupère les codes et clés
 			$oAuthClientID = config::byKey('OAuthClientID', 'somfyoauth');
 			$oAuthClientSecret = config::byKey('OAuthClientSecret', 'somfyoauth');
-			$oAuthClientID = config::byKey('OAuthClientID', 'somfyoauth');
+			$authorizationCode = config::byKey('OAuthClientID', 'somfyoauth');
 			$oAuthClientID = config::byKey('OAuthClientID', 'somfyoauth');
 	
 			$url = "https://accounts.somfy.com/oauth/oauth/v2/token?"
-				. "client_id=" . config::byKey("OAuthVerificationCode", "OAuthClientID")
-			    . "&client_secret=" . config::byKey("OAuthVerificationCode", "OAuthClientSecret")
-			    . "&grant_type=authorization_code&code=" . $authorizationCode 
-			    . "&redirect_uri=" . urlencode (network::getNetworkAccess('external','proto:ip'));
+				. "client_id=" . $oAuthClientID
+			    . "&client_secret=" . $oAuthClientSecret
+			    . "&grant_type=authorization_code&code=" . $OAuthAuthorizationCode 
+			    . "&redirect_uri=" . urlencode (network::getNetworkAccess('external','proto:ip') . '/plugins/somfyoauth/desktop/modal/OauthReturn.php');
 	
 	
 			log::add('somfyoauth', 'debug', 'Contacting ' . print_r($url, true) .'...');
