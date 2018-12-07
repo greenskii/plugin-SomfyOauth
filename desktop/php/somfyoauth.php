@@ -20,8 +20,8 @@
 if (!isConnect('admin')) {
 	throw new Exception('{{401 - Accès non autorisé}}');
 }
-sendVarToJS('eqType', 'apiai');
-$eqLogics = eqLogic::byType('apiai');
+sendVarToJS('eqType', 'somfyoauth');
+$eqLogics = eqLogic::byType('somfyoauth');
 ?>
 
 <div class="row row-overflow">

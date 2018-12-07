@@ -23,7 +23,7 @@ require_once dirname(__FILE__) . '/../../../gsh/core/class/gsh.class.php';
 
 
 
-class apiai extends eqLogic {
+class somfyoauth extends eqLogic {
 	/*     * *************************Attributs****************************** */
 
 	/*
@@ -73,7 +73,7 @@ class apiai extends eqLogic {
 	}
 }
 
-class apiaiCmd extends cmd {
+class somfyoauthCmd extends cmd {
 
 }
 
