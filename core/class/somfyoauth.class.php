@@ -19,8 +19,6 @@
 
 /* * ***************************Includes********************************* */
 require_once dirname(__FILE__) . '/../../../../core/php/core.inc.php';
-require_once dirname(__FILE__) . '/../../../gsh/core/class/gsh.class.php';
-
 
 
 class somfyoauth extends eqLogic {

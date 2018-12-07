@@ -39,6 +39,8 @@ try {
 			</script>
 			Vous pouvez fermer la fenêtre.
 			";
+			
+			somfyoauth::getSomfyToken () ;
 
 		log::add('somfyoauth', 'debug', 'Fin oAuth');
 		}
