@@ -17,14 +17,12 @@
 
 
 require_once dirname(__FILE__) . '/../../../../core/php/core.inc.php';
+require_once dirname(__FILE__) . '/../../core/class/somfyoauth.class.php';
 
 
 try {
 	log::add('somfyoauth', 'debug', 'Début oAuth');
 	
-	
-//	https://your-domain.com/somewhere?code=CODE_GENERATED_BY_SOMFY&state=YOUR_UNIQUE_VALUE
-
 	if (isset($_GET['state'])) {
 	
 		log::add('somfyoauth', 'debug', 'Communication du code par Somfy '. print_r($_GET, true));
@@ -42,40 +40,10 @@ try {
 			Vous pouvez fermer la fenêtre.
 			";
 
-
-		$url = "https://accounts.somfy.com/oauth/oauth/v2/token?"
-			. "client_id=" . config::byKey("OAuthVerificationCode", "OAuthClientID")
-		    . "&client_secret=" . config::byKey("OAuthVerificationCode", "OAuthClientSecret")
-		    . "&grant_type=authorization_code&code=" . $authorizationCode 
-		    . "&redirect_uri=" . urlencode (network::getNetworkAccess('external','proto:ip'));
-		
-		
-		log::add('somfyoauth', 'debug', 'Contacting ' . print_r($url, true) .'...');
-		
-		//Initiate cURL.
-		$ch = curl_init($url);
-
-	    curl_setopt($ch, CURLOPT_AUTOREFERER, TRUE);
-	    curl_setopt($ch, CURLOPT_HEADER, 0);
-	    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-	    curl_setopt($ch, CURLOPT_URL, $url);
-	    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);       
-	
-	    $data = curl_exec($ch);
-	    curl_close($ch);
-
-		$array = json_decode($data, TRUE);
-		
-		log::add('somfyoauth', 'debug', print_r($json, true));
-
-
-		} else {
-			 throw new Exception('Not Authorized!');
+		log::add('somfyoauth', 'debug', 'Fin oAuth');
 		}
-		    
 	}
-	log::add('somfyoauth', 'debug', 'Fin oAuth');
- 
 } catch (Exception $e) {
     var_dump($e->getMessage());
 }
+
