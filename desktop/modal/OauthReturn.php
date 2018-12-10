@@ -29,7 +29,7 @@ try {
 		$authorizationCode = $_GET['code'];
 		$state = $_GET['state'];
 	
-		if ($state == config::byKey("OAuthVerificationCode", "somfyoauth")) {
+		if ($state == jeedom::getApiKey('somfyoauth')) {
 			
 			log::add('somfyoauth', 'debug', 'Code de verification valide');
 			

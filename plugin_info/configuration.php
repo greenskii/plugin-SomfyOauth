@@ -40,12 +40,6 @@ if (!isConnect()) {
 		        <input class="configKey form-control" data-l1key="OAuthClientSecret" />
 		    </div>
 		</div>
-    	<div class="form-group">
-		    <label class="col-lg-4 control-label">{{OAuth Verification Code}}</label>
-		    <div class="col-lg-2">
-		        <input class="configKey form-control" data-l1key="OAuthVerificationCode" />
-		    </div>
-		</div>
 		<div class="form-group">
 		  <label class="col-lg-4 control-label">{{OAuth URL de retour}}</label>
 		  <div class="col-lg-2">
@@ -97,7 +91,7 @@ if (!isConnect()) {
 		var destinationURL = "https://accounts.somfy.com/oauth/oauth/v2/auth?response_type=code&client_id=" + 
 			$('input[data-l1key="OAuthClientID"]').val() + 
 			"&redirect_uri=" + "<?php echo urlencode (network::getNetworkAccess('external','proto:ip')) . '/plugins/somfyoauth/desktop/modal/OauthReturn.php'; ?>" +	"&state=" + 
-			$('input[data-l1key="OAuthVerificationCode"]').val() + 
+			<?php echo jeedom::getApiKey('somfyoauth');?> + 
 			"&grant_type=" + 
 			"authorization_code";
 		console.log(destinationURL);
@@ -122,7 +116,7 @@ if (!isConnect()) {
 		var destinationURL = "https://accounts.somfy.com/oauth/oauth/v2/auth?response_type=code&client_id=" + 
 			$('input[data-l1key="OAuthClientID"]').val() + 
 			"&redirect_uri=" + "<?php echo urlencode (network::getNetworkAccess('external','proto:ip')) . '/plugins/somfyoauth/desktop/modal/OauthReturn.php'; ?>" +	"&state=" + 
-			$('input[data-l1key="OAuthVerificationCode"]').val() + 
+			"<?php echo jeedom::getApiKey('somfyoauth');?>" + 
 			"&grant_type=" + 
 			"authorization_code";
     	window.open(destinationURL);

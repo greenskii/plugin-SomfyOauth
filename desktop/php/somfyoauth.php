@@ -44,7 +44,7 @@ foreach ($eqLogics as $eqLogic) {
    </div>
 
    <div class="col-lg-10 col-md-9 col-sm-8 eqLogicThumbnailDisplay" style="border-left: solid 1px #EEE; padding-left: 25px;">
-    <legend>{{Somfy oAuth}}</legend>
+    <legend>{{Somfy}}</legend>
   <legend><i class="fa fa-cog"></i>  {{Gestion}}</legend>
   <div class="eqLogicThumbnailContainer">
       <!--div class="cursor eqLogicAction" data-action="add" style="text-align: center; background-color : #ffffff; height : 120px;margin-bottom : 10px;padding : 5px;border-radius: 2px;width : 160px;margin-left : 10px;" >
@@ -76,11 +76,11 @@ foreach ($eqLogics as $eqLogic) {
 	} else {
 		echo '<img src="' . $plugin->getPathImgIcon() . '" height="105" width="95" />';
 	}	
-	if ($eqLogic->getCmd('info', 'OnOffState') == "1") {
+	/*if ($eqLogic->getCmd('info', 'OnOffState') == "1") {
 		echo '<i class="fa fa-check" style="position:absolute; top : 10px; left:5px; color:green;" data-toggle="tooltip" data-placement="right" title="Connecté"></i>';
 	} else {
 		echo '<i class="fa fa-times" style="position:absolute; top : 10px; left:5px; color:red;" data-toggle="tooltip" data-placement="right" title="Déconnecté"></i>';
-	}
+	}*/
 	echo "<br>";
 	echo '<span style="font-size : 1.1em;position:relative; top : 15px;word-break: break-all;white-space: pre-wrap;word-wrap: break-word;">' . $eqLogic->getHumanName(true, true) . '</span>';
 	echo '</div>';
