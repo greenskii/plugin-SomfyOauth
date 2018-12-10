@@ -45,8 +45,8 @@ try {
         ajax::success(apiai::saveStack($params));
     }
   
-    if (init('action') == 'syncWithSomfy') {
-        apiai::syncWithGoogle();
+    if (init('action') == 'syncEQWithSomfy') {
+        somfyoauth::syncEQWithSomfy();
         ajax::success();
     }
 

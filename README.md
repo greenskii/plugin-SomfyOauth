@@ -1,1 +1,1 @@
-# plugin-apiai
+# plugin-somfyoauth

@@ -27,6 +27,7 @@ if (!isConnect()) {
 
 <form class="form-horizontal">
     <fieldset>
+    <legend><i class="fa fa-key"></i>&nbsp; {{Configuration OAuth}}</legend>
     	<div class="form-group">
 		    <label class="col-lg-4 control-label">{{OAuth Client ID}}</label>
 		    <div class="col-lg-2">
@@ -49,23 +50,15 @@ if (!isConnect()) {
 		  <label class="col-lg-4 control-label">{{OAuth URL de retour}}</label>
 		  <div class="col-lg-2">
 		    	<span><?php echo network::getNetworkAccess('external','proto:ip') . '/plugins/somfyoauth/desktop/modal/OauthReturn.php';?></span>
-				<span><?php echo urlencode (network::getNetworkAccess('external','proto:ip') . '/plugins/somfyoauth/desktop/modal/OauthReturn.php');?></span>
 			</div>		
 		</div>
       <div class="form-group">
 	        <label class="col-lg-4 control-label">{{Lier le compte Somfy}}</label>
 	        <div class="col-lg-2">
-	        <a class="btn btn-default" id="bt_syncWithSomfy"><i class='fa fa-key'></i> {{Cliquez-ici pour lier votre compte avec Somfy}}</a>
-	        <a class="btn btn-default" id="bt_syncWithSomfyTab"><i class='fa fa-external-link-alt'></i>Tab</a>
+	        <!--a class="btn btn-default" id="bt_syncWithSomfy"><i class='fa fa-key'></i> {{Cliquez-ici pour lier votre compte avec Somfy}}</a-->
+	        <a class="btn btn-default" id="bt_syncWithSomfyTab"><i class='fa fa-key'></i>{{Cliquez-ici pour lier votre compte avec Somfy}}</a>
 	        </div>
 	</div>    
-		
-		<div class="form-group">
-		  <label class="col-lg-4 control-label">{{OAuth Scope}}</label>
-		  <div class="col-lg-2">
-		    	<span>code</span>
-			</div>		
-		</div>
     	<div class="form-group">
 		    <label class="col-lg-4 control-label">{{OAuth Authorization Code}}</label>
 		    <div class="col-lg-6">
@@ -83,6 +76,16 @@ if (!isConnect()) {
 		    <div class="col-lg-4">
 		        <input class="configKey form-control" data-l1key="OAuthRefreshToken" readonly/>
 		    </div>
+		</div>
+  </fieldset>
+     <fieldset>
+    <legend><i class="fa fa-download"></i>&nbsp; {{Gestion des équipements}}</legend>
+      <div class="form-group">
+	        <label class="col-lg-4 control-label">{{Equipements}}</label>
+	        <div class="col-lg-2">
+	        <!--a class="btn btn-default" id="bt_syncWithSomfy"><i class='fa fa-key'></i> {{Cliquez-ici pour lier votre compte avec Somfy}}</a-->
+	        <a class="btn btn-default" id="bt_syncEQWithSomfy"><i class='fa fa-download'></i>{{Télécharger et synchroniser la liste de vos équipements Somfy}}</a>
+	        </div>
 		</div>
   </fieldset>
 </form>
@@ -125,6 +128,26 @@ if (!isConnect()) {
     	window.open(destinationURL);
 		return false;
     });
-   
+    
+    $('#bt_syncEQWithSomfy').on('click', function () {
+        $.ajax({// fonction permettant de faire de l'ajax
+            type: "POST", // methode de transmission des données au fichier php
+            url: "plugins/somfyoauth/core/ajax/somfyoauth.ajax.php", // url du fichier php
+            data: {
+                action: "syncEQWithSomfy",
+            },
+            dataType: 'json',
+            error: function (request, status, error) {
+                handleAjaxError(request, status, error);
+            },
+            success: function (data) { // si l'appel a bien fonctionné
+                if (data.state != 'ok') {
+                    $('#div_alert').showAlert({message: data.result, level: 'danger'});
+                    return;
+                }
+                $('#div_alert').showAlert({message: '{{Synchronisation réussie}}', level: 'success'});
+            }
+        });
+    });   
 </script>
 
