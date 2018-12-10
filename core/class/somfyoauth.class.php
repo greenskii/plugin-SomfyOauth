@@ -37,7 +37,7 @@ class somfyoauth extends eqLogic {
 				CURLOPT_TIMEOUT => 4
 			); 
 			
-			curl_setopt_array($ch, ($defaults)); 
+			curl_setopt_array($ch, ($defaults + $params)); 
 			
 			if ($includeAuthentificationHeaders == true) {
 				// on récupère les codes et clés
@@ -113,12 +113,12 @@ class somfyoauth extends eqLogic {
 	public static function createStateCommand($eqLogic, $state) {
 
 		// création de la commande position
-		$infoCommand = $eqLogic->getCmd(null, $state['name']);
+		$infoCommand = $eqLogic->getCmd(null, $state['name'] . "_state");
 		if (!is_object($infoCommand)) {
 			$infoCommand = new somfyoauthCmd();
-			$infoCommand->setName(__(lcfirst($state['name']), __FILE__));
+			$infoCommand->setName(__(lcfirst($state['name']) . "_state", __FILE__));
 		}
-		$infoCommand->setLogicalId('positioninfo');
+		$infoCommand->setLogicalId($state['name'] . "_state");
 		$infoCommand->setEqLogic_id($eqLogic->getId());
 		$infoCommand->setType('info');
 		$infoCommand->setSubType('string');
@@ -196,6 +196,62 @@ class somfyoauth extends eqLogic {
 		}
 	}
 
+	public function refreshState($deviceId) {
+		
+		$urlExec = 'https://api.somfy.com/api/v1/device/'. $deviceId;
+		$result = self::executeQuery($urlExec);	
+		log::add('somfyoauth', 'debug', print_r($result, true));
+		foreach($result['states'] as $state) {
+			$infoCommand = $this->getCmd('info', $state['name'] . "_state");
+		log::add('somfyoauth', 'debug', 'new state ' . $this->getName() . ' => ' . $state['value']);
+			if (is_object($infoCommand) && $infoCommand->execCmd() !== $infoCommand->formatValue($state['value'])) {
+				$infoCommand->setCollectDate('');
+				$infoCommand->event($state['value']);
+			}
+		}
+	}
+	
+	public static function refreshAll() {
+		log::add('somfyoauth', 'debug', 'Starting refresh all');
+    	try {
+
+    		$eqs = eqLogic::byType('somfyoauth', true);
+    		foreach ($eqs as $eq) {
+    			$eq->refreshState($eq->getLogicalId());
+    		}
+    	return 1;
+    	
+    	} catch (Exception $e) {
+    		log::add('somfyoauth', 'debug', print_r($e, true));
+    	}		
+	}
+		
+	
+	public static function executeCommandOnDevice($deviceId, $commandName, $parameters = array()) {
+		
+		$urlExec = 'https://api.somfy.com/api/v1/device/'. $deviceId .'/exec';
+
+        $data = [
+            "name" => $commandName,
+            "parameters" => $parameters
+		];
+        //Encode the array into JSON.
+        $jsonDataEncoded = json_encode($data);
+		$paramsQuery = array(
+			CURLOPT_POST => 1,
+			CURLOPT_POSTFIELDS => $jsonDataEncoded
+		);
+
+		$result = self::executeQuery($urlExec, $paramsQuery);
+   		log::add('somfyoauth', 'debug', 'Fin requete ');
+
+		return 1;
+	}
+	
+    public static function cron30() {
+    	
+    }
+
 }
 
 class somfyoauthCmd extends cmd {
@@ -203,7 +259,8 @@ class somfyoauthCmd extends cmd {
     public function execute($_options = array()) {
 	   	$eqLogic = $this->getEqLogic();
 	   	$eqId = $eqLogic->getLogicalId();
- 
+
+	   	return $eqLogic->executeCommandOnDevice($eqId, $this->getLogicalId());
     }
 
 }

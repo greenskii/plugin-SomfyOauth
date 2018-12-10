@@ -19,6 +19,9 @@
     syncWithSomfy();
 });
 
+ $('#bt_syncEqLogic').on('click', function () {
+    refreshStates();
+});
 
 function syncWithSomfy() {
 	var page = "https://accounts.somfy.com/oauth/oauth/v2/auth?response_type=code&client_id=" +	"YOUR_CONSUMER_KEY" 
@@ -34,6 +37,27 @@ function syncWithSomfy() {
 	                   title: "Some title"
 	               });
 	$dialog.dialog('open');
+}
+
+function refreshStates() {
+    $.ajax({
+        type: "POST", 
+        url: "plugins/somfyoauth/core/ajax/somfyoauth.ajax.php", 
+        data: {
+            action: "refreshStates",
+        },
+        dataType: 'json',
+        error: function (request, status, error) {
+            handleAjaxError(request, status, error);
+        },
+        success: function (data) { 
+            if (data.state != 'ok') {
+                $('#div_alert').showAlert({message: data.result, level: 'danger'});
+                return;
+            }
+            window.location.reload();
+        }
+    });
 }
 
 $("#table_cmd").sortable({axis: "y", cursor: "move", items: ".cmd", placeholder: "ui-state-highlight", tolerance: "intersect", forcePlaceholderSize: true});
