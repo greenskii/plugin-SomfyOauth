@@ -46,6 +46,12 @@ if (!isConnect()) {
 		    	<span><?php echo network::getNetworkAccess('external','proto:ip') . '/plugins/somfyoauth/desktop/modal/OauthReturn.php';?></span>
 			</div>		
 		</div>
+		<div class="form-group">
+		  <label class="col-lg-4 control-label">{{OAuth URL de retour forcée}}</label>
+		  <div class="col-lg-2">
+		        <input class="configKey form-control" data-l1key="OAuthURLRetour" />/plugins/somfyoauth/desktop/modal/OauthReturn.php
+			</div>		
+		</div>
       <div class="form-group">
 	        <label class="col-lg-4 control-label">{{Lier le compte Somfy}}</label>
 	        <div class="col-lg-2">
@@ -81,19 +87,55 @@ if (!isConnect()) {
 	        <a class="btn btn-default" id="bt_syncEQWithSomfy"><i class='fa fa-download'></i>{{Télécharger et synchroniser la liste de vos équipements Somfy}}</a>
 	        </div>
 		</div>
-  </fieldset>
+		<div class="form-group">
+	        <label class="col-lg-4 control-label">{{Rafraichissement automatique}}</label>
+	        <div class="col-lg-2">
+              <select id="frequence" class="configKey form-control"  data-l1key="frequence_refresh" >
+                  <option value="0.25">{{15mn}}</option>
+                  <option value="0.5">{{30mn}}</option>
+                  <option value="1">{{1h}}</option>
+                  <option value="2">{{2h}}</option>
+                  <option value="3">{{3h}}</option>
+                  <option value="4">{{4h}}</option>
+                  <option value="5">{{5h}}</option>
+                  <option value="6">{{6h}}</option>
+                  <option value="7">{{7h}}</option>
+                  <option value="8">{{8h}}</option>
+                  <option value="9">{{9h}}</option>
+                  <option value="10">{{10h}}</option>
+                  <option value="11">{{11h}}</option>
+                  <option value="12">{{12h}}</option>
+                </select>
+	        </div>
+		</div>
+		<div class="form-group">
+	        <label class="col-lg-4 control-label">{{Rafraichissement post-action}}</label>
+	        <div class="col-lg-2">
+  				<input type="checkbox" class="configKey" data-l1key="postaction_refresh" checked/>
+	        </div>
+		</div>
+		  </fieldset>
 </form>
 
 
 <script>
     $('#bt_syncWithSomfy').on('click', function () {
-	//https://accounts.somfy.com/oauth/oauth/v2/auth?response_type=code&client_id=YOUR_CONSUMER_KEY&redirect_uri=https%3A%2F%2Fyour-domain.com%2Fsomewhere&state=YOUR_UNIQUE_VALUE&grant_type=authorization_code
-		var destinationURL = "https://accounts.somfy.com/oauth/oauth/v2/auth?response_type=code&client_id=" + 
-			$('input[data-l1key="OAuthClientID"]').val() + 
-			"&redirect_uri=" + "<?php echo urlencode (network::getNetworkAccess('external','proto:ip')) . '/plugins/somfyoauth/desktop/modal/OauthReturn.php'; ?>" +	"&state=" + 
-			<?php echo jeedom::getApiKey('somfyoauth');?> + 
-			"&grant_type=" + 
-			"authorization_code";
+    	var destinationURL = "";
+		if (typeof($('input[data-l1key="OAuthURLRetour"]').val()) != "undefined" && $('input[data-l1key="OAuthURLRetour"]').val() !== null) {
+			destinationURL = "https://accounts.somfy.com/oauth/oauth/v2/auth?response_type=code&client_id=" + 
+				$('input[data-l1key="OAuthClientID"]').val() + 
+				"&redirect_uri=" +  $.param($('input[data-l1key="OAuthURLRetour"]').val()) + '/plugins/somfyoauth/desktop/modal/OauthReturn.php' + "&state=" + 
+				<?php echo jeedom::getApiKey('somfyoauth');?> + 
+				"&grant_type=" + 
+				"authorization_code";	
+		} else {
+			destinationURL = "https://accounts.somfy.com/oauth/oauth/v2/auth?response_type=code&client_id=" + 
+				$('input[data-l1key="OAuthClientID"]').val() + 
+				"&redirect_uri=" + "<?php echo urlencode (network::getNetworkAccess('external','proto:ip')) . '/plugins/somfyoauth/desktop/modal/OauthReturn.php'; ?>" +	"&state=" + 
+				<?php echo jeedom::getApiKey('somfyoauth');?> + 
+				"&grant_type=" + 
+				"authorization_code";
+		}
 		console.log(destinationURL);
 	    var wWidth = $(window).width();
 	    var dWidth = wWidth * 0.8;
@@ -113,12 +155,24 @@ if (!isConnect()) {
     });
     
     $('#bt_syncWithSomfyTab').on('click', function () {
-		var destinationURL = "https://accounts.somfy.com/oauth/oauth/v2/auth?response_type=code&client_id=" + 
-			$('input[data-l1key="OAuthClientID"]').val() + 
-			"&redirect_uri=" + "<?php echo urlencode (network::getNetworkAccess('external','proto:ip')) . '/plugins/somfyoauth/desktop/modal/OauthReturn.php'; ?>" +	"&state=" + 
-			"<?php echo jeedom::getApiKey('somfyoauth');?>" + 
-			"&grant_type=" + 
-			"authorization_code";
+    	var destinationURL = "";
+		if (typeof($('input[data-l1key="OAuthURLRetour"]').val()) != "undefined" && $('input[data-l1key="OAuthURLRetour"]').val() !== null && $('input[data-l1key="OAuthURLRetour"]').val() != "") {
+			console.log('destination forcée');
+			destinationURL = "https://accounts.somfy.com/oauth/oauth/v2/auth?response_type=code&client_id=" + 
+				$('input[data-l1key="OAuthClientID"]').val() + 
+				"&redirect_uri=" +  encodeURIComponent($('input[data-l1key="OAuthURLRetour"]').val()) + '/plugins/somfyoauth/desktop/modal/OauthReturn.php' + "&state=" + 
+				"<?php echo jeedom::getApiKey('somfyoauth');?>" + 
+				"&grant_type=" + 
+				"authorization_code";	
+		} else {
+			destinationURL = "https://accounts.somfy.com/oauth/oauth/v2/auth?response_type=code&client_id=" + 
+				$('input[data-l1key="OAuthClientID"]').val() + 
+				"&redirect_uri=" + "<?php echo urlencode (network::getNetworkAccess('external','proto:ip')) . '/plugins/somfyoauth/desktop/modal/OauthReturn.php'; ?>" +	"&state=" + 
+				"<?php echo jeedom::getApiKey('somfyoauth');?>" + 
+				"&grant_type=" + 
+				"authorization_code";
+		}
+		console.log(destinationURL);
     	window.open(destinationURL);
 		return false;
     });

@@ -71,16 +71,16 @@ foreach ($eqLogics as $eqLogic) {
 foreach ($eqLogics as $eqLogic) {
 	$opacity = ($eqLogic->getIsEnable()) ? '' : jeedom::getConfiguration('eqLogic:style:noactive');
 	echo '<div class="eqLogicDisplayCard cursor" data-eqLogic_id="' . $eqLogic->getId() . '" style="text-align: center; background-color : #ffffff; height : 200px;margin-bottom : 10px;padding : 5px;border-radius: 2px;width : 160px;margin-left : 10px;' . $opacity . '" >';
-	if (true) {
+	if ($eqLogic->getImage() != null) {
 		echo '<img src="' . $eqLogic->getImage() . '" height="105" width="95" />';
 	} else {
 		echo '<img src="' . $plugin->getPathImgIcon() . '" height="105" width="95" />';
 	}	
-	/*if ($eqLogic->getCmd('info', 'OnOffState') == "1") {
-		echo '<i class="fa fa-check" style="position:absolute; top : 10px; left:5px; color:green;" data-toggle="tooltip" data-placement="right" title="Connecté"></i>';
+	if ($eqLogic->getCmd('info', 'available_state') == 1) {
+		echo $eqLogic->getCmd('info', 'available') .'<i class="fa fa-check" style="position:absolute; top : 10px; left:5px; color:green;" data-toggle="tooltip" data-placement="right" title="Connecté"></i>';
 	} else {
-		echo '<i class="fa fa-times" style="position:absolute; top : 10px; left:5px; color:red;" data-toggle="tooltip" data-placement="right" title="Déconnecté"></i>';
-	}*/
+		echo $eqLogic->getCmd('info', 'available') . '<i class="fa fa-times" style="position:absolute; top : 10px; left:5px; color:red;" data-toggle="tooltip" data-placement="right" title="Déconnecté"></i>';
+	}
 	echo "<br>";
 	echo '<span style="font-size : 1.1em;position:relative; top : 15px;word-break: break-all;white-space: pre-wrap;word-wrap: break-word;">' . $eqLogic->getHumanName(true, true) . '</span>';
 	echo '</div>';
@@ -136,6 +136,42 @@ foreach (object::all() as $object) {
             <input type="text" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="city" placeholder="param1"/>
         </div>
     </div-->
+	<div class="form-group">
+		<label class="col-lg-3 control-label">{{Catégorie}}</label>
+		<div class="col-lg-9">
+		<?php
+		foreach (jeedom::getConfiguration('eqLogic:category') as $key => $value) {
+		echo '<label class="checkbox-inline">';
+		echo '<input type="checkbox" class="eqLogicAttr" data-l1key="category" data-l2key="' . $key . '" />' . $value['name'];
+		echo '</label>';
+		}
+		?>
+		</div>
+	</div> 
+	            <div class="form-group">
+                <label class="col-sm-3 control-label">{{Connecté via}}</label>
+                <div class="col-sm-2">
+                <input type="text" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="parentId" readonly/>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-3 control-label">{{ID Somfy}}</label>
+                <div class="col-sm-3">
+                	 <input type="text" class="eqLogicAttr form-control" data-l1key="logicalId" readonly/>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-3 control-label">{{Type Somfy}}</label>
+                <div class="col-sm-3">
+                	 <input type="text" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="somfyType" readonly/>
+                </div>
+            </div>           
+            <div class="form-group">
+                <label class="col-sm-3 control-label">{{ID Site Somfy}}</label>
+                <div class="col-sm-3">
+                	 <input type="text" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="siteId" readonly/>
+                </div>
+            </div>                
 </fieldset>
 </form>
 </div>

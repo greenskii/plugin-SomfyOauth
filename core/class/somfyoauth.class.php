@@ -22,6 +22,33 @@ require_once dirname(__FILE__) . '/../../../../core/php/core.inc.php';
 
 
 class somfyoauth extends eqLogic {
+	
+	public static function getDeviceType($somfyType) {
+		$types = array( 
+			'roller_shutter_positionable_stateful_generic' => 'Volet IO',
+			'hub_connexoon' => 'Hub Connexoon'
+		);
+		if (isset ($types[$somfyType])) {
+			$result = $types[$somfyType];
+		} else {
+			log::add('somfyoauth', 'debug', 'Type inconnu de device => ' . $somfyType);
+			$result = 'inconnu';
+		}
+		return $result;
+	}
+	
+	public static function convertCommandType($somfyType) {
+		$types = array( 
+			'integer' => 'numeric'
+		);
+		if (isset ($types[$somfyType])) {
+			$result = $types[$somfyType];
+		} else {
+			log::add('somfyoauth', 'debug', 'Type inconnu de type de commande => ' . $somfyType);
+			$result = 'string';
+		}
+		return $result;
+	}
 
   	public static function executeQuery($url, $params = array(), $includeAuthentificationHeaders = true) {
 		try {
@@ -76,14 +103,28 @@ class somfyoauth extends eqLogic {
 		$eqLogic = new somfyoauth();
 		$eqLogic->setEqType_name('somfyoauth');
 		$eqLogic->setIsEnable(1);
-		if ( isset($deviceParams['name']) ) {
-			$eqLogic->setName($deviceParams['name']);
+		$name = '';
+		$detectedType = self::getDeviceType($deviceParams['type']);
+		if ( $detectedType != 'inconnu' ) {
+			$name = ucwords($detectedType);
 		} else {
-			$eqLogic->setName($deviceParams['type']);
+			$name = ucwords(str_replace('_', ' ', $deviceParams['type']));
+		}
+		if ( isset($deviceParams['name']) ) {
+			$name .= ' ' . $deviceParams['name'];
+		} 
+		$eqLogic->setName($name);
+		$pieceParent = object::byName($deviceParams['name']);
+		if ( is_object($pieceParent) ) {
+			$eqLogic->setObject_id($pieceParent->getId());
 		}
 		$eqLogic->setLogicalId($deviceParams['id']);
-		$eqLogic->setCategory('heating', 1);
 		$eqLogic->setIsVisible(1);
+		if ( isset($deviceParams['parent_id']) ) {
+			$eqLogic->setConfiguration('parentId', $deviceParams['parent_id']);
+		}
+		$eqLogic->setConfiguration('somfyType', $deviceParams['type']);
+		$eqLogic->setConfiguration('siteId', $deviceParams['site_id']);
 		$eqLogic->save();
 		return $eqLogic;
 	}
@@ -93,7 +134,7 @@ class somfyoauth extends eqLogic {
 		$actionCommand = $eqLogic->getCmd('action', $capability['name']);
 		if (!is_object($actionCommand)) {
 			$actionCommand = new somfyoauthCmd();
-			$actionCommand->setName(__(lcfirst($capability['name']), __FILE__));
+			$actionCommand->setName(__(ucfirst($capability['name']), __FILE__));
 		}
 		$actionCommand->setLogicalId($capability['name']);
 		log::add('somfyoauth', 'debug', 'Rattachement de la commande Action à ' . $eqLogic->getId());
@@ -110,20 +151,20 @@ class somfyoauth extends eqLogic {
 		
 	}
 	
-	public static function createStateCommand($eqLogic, $state) {
+	public static function createStateCommand($eqLogic, $name, $type) {
 
 		// création de la commande position
-		$infoCommand = $eqLogic->getCmd(null, $state['name'] . "_state");
+		$infoCommand = $eqLogic->getCmd(null, $name . "_state");
 		if (!is_object($infoCommand)) {
 			$infoCommand = new somfyoauthCmd();
-			$infoCommand->setName(__(lcfirst($state['name']) . "_state", __FILE__));
+			$infoCommand->setName(__(lcfirst($name) . "_state", __FILE__));
 		}
-		$infoCommand->setLogicalId($state['name'] . "_state");
+		$infoCommand->setLogicalId($name . "_state");
 		$infoCommand->setEqLogic_id($eqLogic->getId());
 		$infoCommand->setType('info');
-		$infoCommand->setSubType('string');
+		$infoCommand->setSubType($type);
 		$infoCommand->save();	 
-		log::add('somfyoauth', 'info', 'Création de la commande info ' . $state['name']);
+		log::add('somfyoauth', 'info', 'Création de la commande info ' . $name);
 	}
    
 	public static function syncEQWithSomfy() {
@@ -137,26 +178,7 @@ class somfyoauth extends eqLogic {
 			$label = $site['label'];
 			log::add('somfyoauth', 'debug', 'Site found : Id  ' . $siteId . ' - Label : ' . $label);
 
-			$urlDevices = "https://api.somfy.com/api/v1/site/" . $siteId . "/device";
-			$devices = self::executeQuery($urlDevices);
-			log::add('somfyoauth', 'debug', 'Retour avec la liste des devices');
-			
-			foreach ($devices as $device) {
-				log::add('somfyoauth', 'debug', 'Traitement device : Id  ' . $device['id']);
-
-				$logicId = $device['id'];
-				$eqLogic = eqLogic::byLogicalId($logicId, 'somfyoauth');
-				if (!is_object($eqLogic)) {
-					$eqLogic = self::createEqFromSomfy($device);
-					foreach($device['capabilities'] as $capability) {
-						self::createCapabilityCommand ($eqLogic, $capability);
-					}
-					foreach($device['states'] as $state) {
-						self::createStateCommand ($eqLogic, $state);
-					}
-				}
-				log::add('somfyoauth', 'debug', 'Fin Traitement device : Id  ' . $device['id']);
-	      	}
+			self::syncSite($siteId);
 		}
 	}
   
@@ -196,28 +218,83 @@ class somfyoauth extends eqLogic {
 		}
 	}
 
-	public function refreshState($deviceId) {
-		
+	public function syncDevice($device) {
+		try {
+			log::add('somfyoauth', 'debug', 'Sync from device infos');
+			
+			foreach($device['states'] as $state) {
+				$infoCommand = $this->getCmd('info', $state['name'] . "_state");
+				if ($state['type'] == 'integer' && !isset($state['value'])) {
+					$state['value'] = 0;
+				}
+				log::add('somfyoauth', 'debug', 'detected ' .$state['name'] . '_state value for ' . $this->getName() . ' => ' . $state['value']);
+				if (is_object($infoCommand) && $infoCommand->execCmd() != $infoCommand->formatValue($state['value'])) {
+					log::add('somfyoauth', 'debug', 'update of ' .$state['name'] . '_state value for ' . $this->getName() . ' => ' . $state['value']);
+					$infoCommand->setCollectDate('');
+					$infoCommand->event($state['value']);
+				}
+			}
+			$infoCommand = $this->getCmd('info', "available_state");
+			log::add('somfyoauth', 'debug', 'detected available_state value for ' . $this->getName() . ' => ' . $device['available']);
+	
+			if (is_object($infoCommand) && $infoCommand->execCmd() != $infoCommand->formatValue($device['available'])) {
+				log::add('somfyoauth', 'debug', 'update of available_state value for ' . $this->getName() . ' => ' . $device['available']);
+				$infoCommand->setCollectDate('');
+				$infoCommand->event($device['available']);
+			}
+		   	return 1;
+    	} catch (Exception $e) {
+    		log::add('somfyoauth', 'debug', print_r($e, true));
+    	}		
+	}
+
+	public function refreshDevice($deviceId) {
 		$urlExec = 'https://api.somfy.com/api/v1/device/'. $deviceId;
 		$result = self::executeQuery($urlExec);	
 		log::add('somfyoauth', 'debug', print_r($result, true));
-		foreach($result['states'] as $state) {
-			$infoCommand = $this->getCmd('info', $state['name'] . "_state");
-		log::add('somfyoauth', 'debug', 'new state ' . $this->getName() . ' => ' . $state['value']);
-			if (is_object($infoCommand) && $infoCommand->execCmd() !== $infoCommand->formatValue($state['value'])) {
-				$infoCommand->setCollectDate('');
-				$infoCommand->event($state['value']);
-			}
+		$this->syncDevice($result);
+	}
+
+	public static function syncSite($siteId) {
+		$urlDevices = "https://api.somfy.com/api/v1/site/" . $siteId . "/device";
+		$devices = self::executeQuery($urlDevices);
+		log::add('somfyoauth', 'debug', 'Retour avec la liste des devices');
+		if (isset($result['message']) && $result['message'] == 'site_not_found') {
+		    throw new Exception('Site ' . $siteId . ' not found');
 		}
+		foreach ($devices as $device) {
+			log::add('somfyoauth', 'debug', 'Traitement device : Id  ' . $device['id']);
+
+			$logicId = $device['id'];
+			$eqLogic = eqLogic::byLogicalId($logicId, 'somfyoauth');
+			if (!is_object($eqLogic)) {
+				$eqLogic = self::createEqFromSomfy($device);
+				foreach($device['capabilities'] as $capability) {
+					self::createCapabilityCommand ($eqLogic, $capability);
+				}
+				foreach($device['states'] as $state) {
+					self::createStateCommand ($eqLogic, $state['name'], self::convertCommandType($state['type']));
+				}
+				self::createStateCommand ($eqLogic, 'available', 'binary');
+			}
+			$eqLogic->syncDevice($device);
+			log::add('somfyoauth', 'debug', 'Fin Traitement device : Id  ' . $device['id']);
+      	}
 	}
 	
 	public static function refreshAll() {
 		log::add('somfyoauth', 'debug', 'Starting refresh all');
     	try {
-
     		$eqs = eqLogic::byType('somfyoauth', true);
+    		$siteArray = array();
     		foreach ($eqs as $eq) {
-    			$eq->refreshState($eq->getLogicalId());
+    			$siteId = $eq->getConfiguration('siteId');
+    			if ( !in_array($siteId, $siteArray) ) {
+					log::add('somfyoauth', 'debug', 'Syncing site ' . print_r($siteId, true));
+    				self::syncSite(print_r($siteId, true));
+	     			$siteArray[] = $siteId;
+				}
+    			//$eq->refreshState($eq->getLogicalId());
     		}
     	return 1;
     	
@@ -249,8 +326,18 @@ class somfyoauth extends eqLogic {
 	}
 	
     public static function cron30() {
-    	
+    	return self::refreshAll();
     }
+    
+	public function getImage() {
+		$somfyType = $this->getConfiguration('somfyType');
+			if (isset($somfyType) && $this->getDeviceType($somfyType) != 'inconnu') {
+			return 'plugins/somfyoauth/core/img/' . $somfyType . '.png';	
+		} else {
+			return null;	
+		}
+		return null;
+	}
 
 }
 
