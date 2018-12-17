@@ -26,7 +26,10 @@ class somfyoauth extends eqLogic {
 	public static function getDeviceType($somfyType) {
 		$types = array( 
 			'roller_shutter_positionable_stateful_generic' => 'Volet IO',
-			'hub_connexoon' => 'Hub Connexoon'
+			'roller_shutter_discrete_generic' => 'Volet RTS',
+			'roller_shutter_positionable_stateful_rs100' => 'Volet RS 100 IO',
+			'hub_connexoon' => 'Hub Connexoon',
+			'hub_tahoma_2' => 'Hub Tahoma v2'
 		);
 		if (isset ($types[$somfyType])) {
 			$result = $types[$somfyType];
