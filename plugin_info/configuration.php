@@ -49,8 +49,9 @@ if (!isConnect()) {
 		<div class="form-group">
 		  <label class="col-lg-4 control-label">{{OAuth URL de retour forcée}}</label>
 		  <div class="col-lg-2">
-		        <input class="configKey form-control" data-l1key="OAuthURLRetour" />/plugins/somfyoauth/desktop/modal/OauthReturn.php
+		        <input class="configKey form-control" data-l1key="OAuthURLRetour" />
 			</div>		
+        <label class="" for="OAuthURLRetour">/plugins/somfyoauth/desktop/modal/OauthReturn.php</label>
 		</div>
       <div class="form-group">
 	        <label class="col-lg-4 control-label">{{Lier le compte Somfy}}</label>
@@ -121,7 +122,7 @@ if (!isConnect()) {
 <script>
     $('#bt_syncWithSomfy').on('click', function () {
     	var destinationURL = "";
-		if (typeof($('input[data-l1key="OAuthURLRetour"]').val()) != "undefined" && $('input[data-l1key="OAuthURLRetour"]').val() !== null) {
+		if (typeof($('input[data-l1key="OAuthURLRetour"]').val()) != "undefined" && $('input[data-l1key="OAuthURLRetour"]').val() !== null  && $('input[data-l1key="OAuthURLRetour"]').val() != "") {
 			destinationURL = "https://accounts.somfy.com/oauth/oauth/v2/auth?response_type=code&client_id=" + 
 				$('input[data-l1key="OAuthClientID"]').val() + 
 				"&redirect_uri=" +  $.param($('input[data-l1key="OAuthURLRetour"]').val()) + '/plugins/somfyoauth/desktop/modal/OauthReturn.php' + "&state=" + 
@@ -131,7 +132,7 @@ if (!isConnect()) {
 		} else {
 			destinationURL = "https://accounts.somfy.com/oauth/oauth/v2/auth?response_type=code&client_id=" + 
 				$('input[data-l1key="OAuthClientID"]').val() + 
-				"&redirect_uri=" + "<?php echo urlencode (network::getNetworkAccess('external','proto:ip')) . '/plugins/somfyoauth/desktop/modal/OauthReturn.php'; ?>" +	"&state=" + 
+				"&redirect_uri=" + "<?php echo urlencode (network::getNetworkAccess('external','proto:ip') . '/plugins/somfyoauth/desktop/modal/OauthReturn.php'); ?>" +	"&state=" + 
 				<?php echo jeedom::getApiKey('somfyoauth');?> + 
 				"&grant_type=" + 
 				"authorization_code";
@@ -160,7 +161,7 @@ if (!isConnect()) {
 			console.log('destination forcée');
 			destinationURL = "https://accounts.somfy.com/oauth/oauth/v2/auth?response_type=code&client_id=" + 
 				$('input[data-l1key="OAuthClientID"]').val() + 
-				"&redirect_uri=" +  encodeURIComponent($('input[data-l1key="OAuthURLRetour"]').val()) + '/plugins/somfyoauth/desktop/modal/OauthReturn.php' + "&state=" + 
+				"&redirect_uri=" +  encodeURIComponent($('input[data-l1key="OAuthURLRetour"]').val() + '/plugins/somfyoauth/desktop/modal/OauthReturn.php') + "&state=" + 
 				"<?php echo jeedom::getApiKey('somfyoauth');?>" + 
 				"&grant_type=" + 
 				"authorization_code";	

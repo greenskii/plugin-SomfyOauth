@@ -188,7 +188,7 @@ class somfyoauth extends eqLogic {
 			// on récupère les codes et clés
 			$oAuthClientID = config::byKey('OAuthClientID', 'somfyoauth');
 			$oAuthClientSecret = config::byKey('OAuthClientSecret', 'somfyoauth');
-			
+
 			if ($refresh == true) {
 				$oAuthRefreshToken = config::byKey('OAuthRefreshToken', 'somfyoauth');
 				$url = "https://accounts.somfy.com/oauth/oauth/v2/token?"
@@ -196,12 +196,20 @@ class somfyoauth extends eqLogic {
 			    . "&client_secret=" . $oAuthClientSecret
 			    . "&grant_type=refresh_token&refresh_token=" . $oAuthRefreshToken;
 			} else {
+
+				$oAuthURLRetour = config::byKey('OAuthURLRetour', 'somfyoauth');
+				if (isset($oAuthURLRetour) && $oAuthURLRetour != "") {
+					$urlRetour = urlencode($oAuthURLRetour . '/plugins/somfyoauth/desktop/modal/OauthReturn.php');
+				} else {
+					$urlRetour = urlencode(network::getNetworkAccess('external','proto:ip') . '/plugins/somfyoauth/desktop/modal/OauthReturn.php');
+				}
+
 				$oAuthAuthorizationCode = config::byKey('OAuthAuthorizationCode', 'somfyoauth');
 				$url = "https://accounts.somfy.com/oauth/oauth/v2/token?"
 				. "client_id=" . $oAuthClientID
 			    . "&client_secret=" . $oAuthClientSecret
 			    . "&grant_type=authorization_code&code=" . $oAuthAuthorizationCode 
-			    . "&redirect_uri=" . urlencode (network::getNetworkAccess('external','proto:ip') . '/plugins/somfyoauth/desktop/modal/OauthReturn.php');
+			    . "&redirect_uri=" . $urlRetour;
 			}
 	
 			$array = self::executeQuery($url, [], false);
@@ -263,7 +271,7 @@ class somfyoauth extends eqLogic {
 		    throw new Exception('Site ' . $siteId . ' not found');
 		}
 		foreach ($devices as $device) {
-			log::add('somfyoauth', 'debug', 'Traitement device : Id  ' . $device['id']);
+			log::add('somfyoauth', 'debug', '** Traitement device Id ' . $device['id'] . ' **');
 
 			$logicId = $device['id'];
 			$eqLogic = eqLogic::byLogicalId($logicId, 'somfyoauth');
@@ -278,7 +286,7 @@ class somfyoauth extends eqLogic {
 				self::createStateCommand ($eqLogic, 'available', 'binary');
 			}
 			$eqLogic->syncDevice($device);
-			log::add('somfyoauth', 'debug', 'Fin Traitement device : Id  ' . $device['id']);
+			log::add('somfyoauth', 'debug', '** Fin Traitement device Id  ' . $device['id'] . ' **');
       	}
 	}
 	
