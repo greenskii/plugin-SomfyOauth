@@ -144,7 +144,7 @@ class somfyoauth extends eqLogic {
 
 		$actionCommand->setEqLogic_id($eqLogic->getId());
 		$actionCommand->setType('action');
-		if (isset($capability['parameters']) && $capability['parameters']['name'] == 'position' && $capability['parameters']['type'] == 'integer') {
+		if ($capability['parameters'][0]['name'] == 'position' && $capability['parameters'][0]['type'] == 'integer') {
 			$actionCommand->setSubType('slider');
 		} else {
 			$actionCommand->setSubType('other');
@@ -166,6 +166,9 @@ class somfyoauth extends eqLogic {
 		$infoCommand->setEqLogic_id($eqLogic->getId());
 		$infoCommand->setType('info');
 		$infoCommand->setSubType($type);
+		if ($name == 'position') {
+			$infoCommand->setUnite('%');
+		}
 		$infoCommand->save();	 
 		log::add('somfyoauth', 'info', 'Création de la commande info ' . $name);
 	}
@@ -191,13 +194,13 @@ class somfyoauth extends eqLogic {
 			// on récupère les codes et clés
 			$oAuthClientID = config::byKey('OAuthClientID', 'somfyoauth');
 			$oAuthClientSecret = config::byKey('OAuthClientSecret', 'somfyoauth');
+			$url = "https://accounts.somfy.com/oauth/oauth/v2/token?"
+			. "client_id=" . $oAuthClientID
+		    . "&client_secret=" . $oAuthClientSecret;
 
 			if ($refresh == true) {
 				$oAuthRefreshToken = config::byKey('OAuthRefreshToken', 'somfyoauth');
-				$url = "https://accounts.somfy.com/oauth/oauth/v2/token?"
-				. "client_id=" . $oAuthClientID
-			    . "&client_secret=" . $oAuthClientSecret
-			    . "&grant_type=refresh_token&refresh_token=" . $oAuthRefreshToken;
+			    $url .=  "&grant_type=refresh_token&refresh_token=" . $oAuthRefreshToken;
 			} else {
 
 				$oAuthURLRetour = config::byKey('OAuthURLRetour', 'somfyoauth');
@@ -208,10 +211,7 @@ class somfyoauth extends eqLogic {
 				}
 
 				$oAuthAuthorizationCode = config::byKey('OAuthAuthorizationCode', 'somfyoauth');
-				$url = "https://accounts.somfy.com/oauth/oauth/v2/token?"
-				. "client_id=" . $oAuthClientID
-			    . "&client_secret=" . $oAuthClientSecret
-			    . "&grant_type=authorization_code&code=" . $oAuthAuthorizationCode 
+				$url .= "&grant_type=authorization_code&code=" . $oAuthAuthorizationCode 
 			    . "&redirect_uri=" . $urlRetour;
 			}
 	
@@ -229,8 +229,14 @@ class somfyoauth extends eqLogic {
 		}
 	}
 
-	public function syncDevice($device) {
+	public function syncDevice($device = null) {
 		try {
+			if (!isset($device)) {
+				$deviceId = $this->getLogicalId();
+				$urlExec = 'https://api.somfy.com/api/v1/device/'. $deviceId;
+				$device = self::executeQuery($urlExec);	
+				log::add('somfyoauth', 'debug', print_r($device, true));
+			}
 			log::add('somfyoauth', 'debug', 'Sync from device infos');
 			
 			foreach($device['states'] as $state) {
@@ -259,38 +265,51 @@ class somfyoauth extends eqLogic {
     	}		
 	}
 
-	public function refreshDevice($deviceId) {
-		$urlExec = 'https://api.somfy.com/api/v1/device/'. $deviceId;
-		$result = self::executeQuery($urlExec);	
-		log::add('somfyoauth', 'debug', print_r($result, true));
-		$this->syncDevice($result);
-	}
-
 	public static function syncSite($siteId) {
-		$urlDevices = "https://api.somfy.com/api/v1/site/" . $siteId . "/device";
-		$devices = self::executeQuery($urlDevices);
-		log::add('somfyoauth', 'debug', 'Retour avec la liste des devices');
-		if (isset($result['message']) && $result['message'] == 'site_not_found') {
-		    throw new Exception('Site ' . $siteId . ' not found');
+		try {
+			$urlDevices = "https://api.somfy.com/api/v1/site/" . $siteId . "/device";
+			$devices = self::executeQuery($urlDevices);
+			log::add('somfyoauth', 'debug', 'Retour avec la liste des devices');
+			if (!is_array($devices[0]) || (isset($devices['uid']))) {
+			    throw new Exception('Error with site ID ' . $siteId . ' : ' . $devices['message']);
+			} else {
+				foreach ($devices as $device) {
+					log::add('somfyoauth', 'debug', '** Traitement device Id ' . $device['id'] . ' **');
+		
+					$logicId = $device['id'];
+					$eqLogic = eqLogic::byLogicalId($logicId, 'somfyoauth');
+					if (!is_object($eqLogic)) {
+						$eqLogic = self::createEqFromSomfy($device);
+						foreach($device['capabilities'] as $capability) {
+							self::createCapabilityCommand ($eqLogic, $capability);
+						}
+						foreach($device['states'] as $state) {
+							self::createStateCommand ($eqLogic, $state['name'], self::convertCommandType($state['type']));
+						}
+						self::createCapabilityCommand ($eqLogic, array('name' => 'refresh'));
+						self::createStateCommand ($eqLogic, 'available', 'binary');
+					}
+					$eqLogic->syncDevice($device);
+					log::add('somfyoauth', 'debug', '** Fin Traitement device Id  ' . $device['id'] . ' **');
+				}
+	      	}
+      	return 1;
+		} catch (Exception $e) {
+    		log::add('somfyoauth', 'debug', print_r($e, true));
+    	}
+	}
+	
+	public function refresh() {
+		$siteId = $this->getConfiguration('siteId');
+		$parentId = $this->getConfiguration('parentId');
+		log::add('somfyoauth', 'debug', 'Start refreh of specific device ');
+		if (isset($parentId) && $parentId != "") {
+			log::add('somfyoauth', 'debug', 'Device is not a hub');
+			return $this->syncDevice();
+		} else {
+			log::add('somfyoauth', 'debug', 'Device is a hub');
+			return $this->syncSite($siteId);
 		}
-		foreach ($devices as $device) {
-			log::add('somfyoauth', 'debug', '** Traitement device Id ' . $device['id'] . ' **');
-
-			$logicId = $device['id'];
-			$eqLogic = eqLogic::byLogicalId($logicId, 'somfyoauth');
-			if (!is_object($eqLogic)) {
-				$eqLogic = self::createEqFromSomfy($device);
-				foreach($device['capabilities'] as $capability) {
-					self::createCapabilityCommand ($eqLogic, $capability);
-				}
-				foreach($device['states'] as $state) {
-					self::createStateCommand ($eqLogic, $state['name'], self::convertCommandType($state['type']));
-				}
-				self::createStateCommand ($eqLogic, 'available', 'binary');
-			}
-			$eqLogic->syncDevice($device);
-			log::add('somfyoauth', 'debug', '** Fin Traitement device Id  ' . $device['id'] . ' **');
-      	}
 	}
 	
 	public static function refreshAll() {
@@ -305,7 +324,6 @@ class somfyoauth extends eqLogic {
     				self::syncSite(print_r($siteId, true));
 	     			$siteArray[] = $siteId;
 				}
-    			//$eq->refreshState($eq->getLogicalId());
     		}
     	return 1;
     	
@@ -357,8 +375,17 @@ class somfyoauthCmd extends cmd {
     public function execute($_options = array()) {
 	   	$eqLogic = $this->getEqLogic();
 	   	$eqId = $eqLogic->getLogicalId();
-
-	   	return $eqLogic->executeCommandOnDevice($eqId, $this->getLogicalId());
+	   	$result = null;
+	   	
+		switch ($this->getLogicalId()) {
+		    case 'refresh':
+		        $result = $eqLogic->refresh();
+		        break;
+		    default:
+		        $result = $eqLogic->executeCommandOnDevice($eqId, $this->getLogicalId());
+		        break;
+		}
+	   	return $result;
     }
 
 }
