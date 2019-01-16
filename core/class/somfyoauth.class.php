@@ -40,6 +40,22 @@ class somfyoauth extends eqLogic {
 		return $result;
 	}
 	
+	public static function inferGenericType($somfyName) {
+		$result = null;
+		$types = array( 
+			'position' => 'FLAP_SLIDER',
+			'open' => 'FLAP_UP',
+			'close' => 'FLAP_DOWN',
+			'stop' => 'FLAP_STOP'
+		);
+		if (isset ($types[$somfyName])) {
+			$result = $types[$somfyName];
+		} else {
+			log::add('somfyoauth', 'debug', 'Pas de generic type connu pour => ' . $somfyName);
+		}
+		return $result;
+	}	
+	
 	public static function convertCommandType($somfyType) {
 		$types = array( 
 			'integer' => 'numeric'
@@ -146,8 +162,17 @@ class somfyoauth extends eqLogic {
 		$actionCommand->setType('action');
 		if ($capability['parameters'][0]['name'] == 'position' && $capability['parameters'][0]['type'] == 'integer') {
 			$actionCommand->setSubType('slider');
+			$actionCommand->setConfiguration('parameters', '#slider#');
+			$actionCommand->setConfiguration('minValue', '0');
+			$actionCommand->setConfiguration('maxValue', '100');
+			$actionCommand->setConfiguration('commandName');
+	
 		} else {
 			$actionCommand->setSubType('other');
+		}
+		$genericType = somfyoauth::inferGenericType($capability['name']);
+		if (isset($genericType)) {
+			$actionCommand->setDisplay('generic_type', $genericType);
 		}
 		$actionCommand->save();	 
 		log::add('somfyoauth', 'debug', 'Création de la commande Action' . $capability['name']);
@@ -218,10 +243,15 @@ class somfyoauth extends eqLogic {
 			$array = self::executeQuery($url, [], false);
 
           	$accessToken = $array['access_token'];
+			if (isset($accessToken)) {
+    			config::save("OAuthAccessToken", $accessToken, "somfyoauth");
+			}
+
 			$refreshToken = $array['refresh_token'];
-			config::save("OAuthAccessToken", $accessToken, "somfyoauth");
-			config::save("OAuthRefreshToken", $refreshToken, "somfyoauth");
-	
+			if (isset($refreshToken)) {
+			    config::save("OAuthRefreshToken", $refreshToken, "somfyoauth");
+			}
+
 		} catch (Exception $e) {
 			
 			log::add('somfyoauth', 'debug', $e->getMessage());
@@ -347,7 +377,7 @@ class somfyoauth extends eqLogic {
 			CURLOPT_POST => 1,
 			CURLOPT_POSTFIELDS => $jsonDataEncoded
 		);
-
+		log::add('somfyoauth', 'debug', 'Executing command with parameters : ' . print_r($jsonDataEncoded, true));
 		$result = self::executeQuery($urlExec, $paramsQuery);
    		log::add('somfyoauth', 'debug', 'Fin requete ');
 
@@ -380,6 +410,10 @@ class somfyoauthCmd extends cmd {
 		switch ($this->getLogicalId()) {
 		    case 'refresh':
 		        $result = $eqLogic->refresh();
+		        break;
+		    case 'position':
+				log::add('somfyoauth', 'debug', 'Executing command position with options : ' . print_r($_options, true));
+		        $result = $eqLogic->executeCommandOnDevice($eqId, $this->getLogicalId(), array(array("name" => "position", "value" => intval($_options['slider']))));
 		        break;
 		    default:
 		        $result = $eqLogic->executeCommandOnDevice($eqId, $this->getLogicalId());
