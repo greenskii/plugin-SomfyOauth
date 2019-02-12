@@ -175,21 +175,26 @@ foreach (object::all() as $object) {
 </fieldset>
 </form>
 </div>
-      <div role="tabpanel" class="tab-pane" id="commandtab">
-<a class="btn btn-success btn-sm cmdAction pull-right" data-action="add" style="margin-top:5px;"><i class="fa fa-plus-circle"></i> {{Commandes}}</a><br/><br/>
-<table id="table_cmd" class="table table-bordered table-condensed">
-    <thead>
-        <tr>
-        	<th style="width:  50px;">#</th>
-            <th>{{Nom}}</th>
-            <th>{{Type}}</th>
-            <th>{{Action}}</th>
-        </tr>
-    </thead>
-    <tbody>
-    </tbody>
-</table>
-</div>
+			<div role="tabpanel" class="tab-pane" id="commandtab">
+				<a class="btn btn-default btn-sm pull-right" id="bt_addVirtualInfo" style="margin-top:5px;"><i class="fa fa-plus-circle"></i> {{Ajouter une info virtuelle}}</a>
+				<a class="btn btn-default btn-sm  pull-right" id="bt_addVirtualAction" style="margin-top:5px;"><i class="fa fa-plus-circle"></i> {{Ajouter une commande virtuelle}}</a><br/><br/>
+				<table id="table_cmd" class="table table-bordered table-condensed">
+					<thead>
+						<tr>
+							<th style="width: 50px;">#</th>
+							<th style="width: 230px;">{{Nom}}</th>
+							<th style="width: 110px;">{{Sous-Type}}</th>
+							<th style="width: 100px;">{{Unité}}</th>
+							<th style="width: 200px;">{{Paramètres}}</th>
+							<th style="width: 100px;"></th>
+						</tr>
+					</thead>
+					<tbody>
+						
+					</tbody>
+				</table>
+				
+			</div>
 </div>
 
 </div>

@@ -166,6 +166,10 @@ class somfyoauth extends eqLogic {
 			$actionCommand->setConfiguration('minValue', '0');
 			$actionCommand->setConfiguration('maxValue', '100');
 			$actionCommand->setConfiguration('commandName');
+			$infoCommand = $eqLogic->getCmd('info','position_state');
+			if (isset($infoCommand)) {
+				$actionCommand->setValue($infoCommand->getId());
+			}
 	
 		} else {
 			$actionCommand->setSubType('other');
@@ -310,11 +314,11 @@ class somfyoauth extends eqLogic {
 					$eqLogic = eqLogic::byLogicalId($logicId, 'somfyoauth');
 					if (!is_object($eqLogic)) {
 						$eqLogic = self::createEqFromSomfy($device);
-						foreach($device['capabilities'] as $capability) {
-							self::createCapabilityCommand ($eqLogic, $capability);
-						}
 						foreach($device['states'] as $state) {
 							self::createStateCommand ($eqLogic, $state['name'], self::convertCommandType($state['type']));
+						}
+						foreach($device['capabilities'] as $capability) {
+							self::createCapabilityCommand ($eqLogic, $capability);
 						}
 						self::createCapabilityCommand ($eqLogic, array('name' => 'refresh'));
 						self::createStateCommand ($eqLogic, 'available', 'binary');
